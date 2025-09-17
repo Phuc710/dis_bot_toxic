@@ -220,10 +220,10 @@ function parseDuration(time) {
 
 // Khi bot online
 client.once('clientReady', () => {
-    console.log(`🎉 Boo bot ${client.user.tag} đã online! Sẵn sàng làm trò!`);
+    console.log(`🎉 ${client.user.tag} đã online! Sẵn sàng làm trò!`);
     // Set activity với link
 
-    client.user.setActivity('TFT,Ai chơi dời Boo ❤️', {
+    client.user.setActivity('TFT dới Boo ❤️', {
         type: 0, // 0 is 'Playing'
         url: 'https://discordapp.com/channels/1236687268262051912/1236687268262051915'
     });
