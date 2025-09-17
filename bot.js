@@ -193,7 +193,7 @@ client.once('clientReady', () => {
     console.log(`🎉 Boo bot ${client.user.tag} đã online! Sẵn sàng làm trò!`);
     // Set activity với link
 
-    client.user.setActivity('Chơi TFT dới Boo ❤️', {
+    client.user.setActivity('TFT,Ai chơi dới Boo ❤️', {
         type: 0, // 0 is 'Playing'
         url: 'https://discordapp.com/channels/1236687268262051912/1236687268262051915'
     });
