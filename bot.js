@@ -189,7 +189,7 @@ function parseDuration(time) {
 }
 
 // Khi bot online
-client.once('ready', () => {
+client.once('clientReady', () => {
     console.log(`🎉 Boo bot ${client.user.tag} đã online! Sẵn sàng làm trò!`);
     // Set activity với link
 
