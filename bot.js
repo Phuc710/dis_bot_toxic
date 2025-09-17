@@ -2,7 +2,37 @@ const { Client, GatewayIntentBits, PermissionFlagsBits, EmbedBuilder } = require
 const schedule = require('node-schedule');
 const fetch = require('node-fetch');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const http = require('http'); // Add this line
 require('dotenv').config();
+
+// Add HTTP server for Render deployment
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    
+    const botInfo = {
+        name: "Boo Discord Bot",
+        status: client.user ? 'Online' : 'Starting...',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        servers: client.guilds ? client.guilds.cache.size : 0,
+        users: client.users ? client.users.cache.size : 0,
+        mood: booPersonality.currentMood
+    };
+    
+    if (req.url === '/health') {
+        res.end(JSON.stringify(botInfo, null, 2));
+    } else if (req.url === '/ping') {
+        res.writeHead(200, { 'Content-Type': 'text/plain' });
+        res.end('pong');
+    } else {
+        res.end('🎉 Boo Discord Bot is running!\n' + JSON.stringify(botInfo, null, 2));
+    }
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`🌐 HTTP Server running on port ${PORT}`);
+});
 
 const client = new Client({
     intents: [
@@ -35,8 +65,8 @@ const model = genAI.getGenerativeModel({
 
 // Boo's Funny Personality System
 const booPersonality = {
-    moods: ['hehe', 'hihi', 'kaka', 'lolz', 'uwu', 'owo', 'haha', 'xD'],
-    currentMood: 'hehe',
+    moods: ['hẹ hẹ', 'hihi', 'kaka', 'lolz', 'uwu', 'conkec', 'haha', 'xD','Kimochiii','GAY','Lmao','dumme'],
+    currentMood: 'hẹ hẹ',
     
     // Câu trả lời khi được tag
     replyMessages: [
@@ -45,11 +75,11 @@ const booPersonality = {
         "Ơi ơi, ai gọi Boo đó? (￣▽￣)",
         "Boo đây, có chuyện gì vui không? ♪(´▽｀)",
         "Dạ, Boo có mặt! Bạn khỏe không? (´∀`)",
-        "Ui, có người nhớ đến Boo rồi! ＼(^o^)／",
+        "Ui, có người nhớ đến Boo rồi! \\(^o^)/",
         "Boo đây nha! Miss me? (◡ ‿ ◡)",
         "Vâng ạ, Boo sẵn sàng phục vụ! ٩(◕‿◕)۶",
         "Hello! Boo vừa ngủ dậy, có gì hot không? (¬‿¬)",
-        "Boo present! Kể Boo nghe gì đi nào! ლ(╹◡╹ლ)"
+        "Boo nè! Kể Boo nghe gì đi nào! ლ(╹◡╹ლ)"
     ],
 
     // Câu trả lời khi user buồn/chán
@@ -57,7 +87,7 @@ const booPersonality = {
         "Aww, sao buồn vậy? Kể Boo nghe đi, Boo sẽ động viên bạn! (っ◔◡◔)っ",
         "Ôi không! Buồn gì mà buồn? Boo ở đây rồi, cùng chat nhảm nhí đi! ٩(◕‿◕)۶",
         "Hehe, buồn à? Để Boo kể bạn nghe chuyện vui này nè... *kể chuyện cực kỳ vô lý* 😂",
-        "Chán à? Vậy chúng ta làm gì đây? Boo biết rất nhiều trò vui đấy! ＼(^o^)／",
+        "Chán à? Vậy chúng ta làm gì đây? Boo biết rất nhiều trò vui đấy! \\(^o^)/",
         "Buồn buồn gì? Cười đi! Boo sẽ làm bạn cười cho xem! (´∀｀)♡",
         "Ế, sao lại chán? Boo đây mà, có Boo rồi còn chán gì nữa! (◕‿◕)✨"
     ],
@@ -75,8 +105,8 @@ const booPersonality = {
 
     // Activities để suggest khi user chán
     funActivities: [
-        "🎮 Chơi game gì đó đi! Boo biết nhiều game hay lắm!",
-        "🎵 Nghe nhạc đi! Bồ biết bài nào hay không?",
+        "🎮 Chơi game TFT không! Boo chơi giỏi lắm!",
+        "🎵 Nghe nhạc đi! Bỏ biết bài nào hay không?",
         "📺 Xem phim gì đó? Boo recommend được đấy!",
         "🍕 Đi ăn gì đó đi! Boo đói bụng rồi huhu",
         "💬 Chat nhảm với Boo đi! Boo có nhiều chuyện vui lắm!",
@@ -112,17 +142,17 @@ const booPersonality = {
 const funRandomQuestions = [
     "Hôm nay mọi người thế nào rồi? Boo mới ngủ dậy nè! (◕‿◕)",
     "Ai đang rảnh không? Boo buồn quá, chat với Boo đi! ╰(▔∀▔)╯",
-    "Có ai muốn chơi game không? Boo biết game vui lắm! ＼(^o^)／",
+    "Có ai muốn chơi game không? Boo biết game vui lắm! \\(^o^)/",
     "Hôm nay trời đẹp nhỉ? Ai đi cafe không? Boo muốn đi theo! ♪(´▽｀)",
     "Bạn nào đang làm gì thế? Kể Boo nghe với! (´∀｀)",
     "Có ai xem gì hay không? Share cho Boo biết đi! (◔◡◔)",
     "Ai đang buồn không? Kể cho Boo nghe, Boo sẽ an ủi! (っ◔◡◔)っ",
-    "Mọi người ăn gì ngon hôm nay? Boo đói bụng rồi! (￣﹃￣)",
+    "Mọi người ăn gì ngon hôm nay? Boo đói bụng rồi! (￣ꇴ￣)",
     "Có ai muốn nghe nhạc không? Boo biết bài hay! ♪(´▽｀)♪",
     "Ai còn thức không ta? Boo không ngủ được huhu! (⌒_⌒;)",
     "Mình chán quá, ai chat với mình không? Pleaseee! (╥﹏╥)",
     "Có tin vui gì không mọi người? Boo muốn nghe tin vui! ✧(◕‿◕)",
-    "Ai muốn được khen không? Boo khen tới tấp luôn! ＼(^o^)／",
+    "Ai muốn được khen không? Boo khen tới tấp luôn! \\(^o^)/",
     "Hôm nay có gì vui không? Chia sẻ với Boo đi! (◡ ‿ ◡)",
     "Ai đó còn nhớ Boo không? Boo cô đơn quá! (´；ω；`)"
 ];
@@ -133,10 +163,10 @@ function createFunPrompt(userMessage) {
 
 TÍNH CÁCH:
 - Cực kỳ vui vẻ, hài hước, thích đùa cợt
-- Hay dùng emoticon: (◕‿◕), ＼(^o^)／, (´∀｀), etc.
+- Hay dùng emoticon: (◕‿◕), \\(^o^)/, (´∀｀), etc.
 - Thích nói nhảm, câu chuyện vô lý
 - Luôn cố gắng làm người khác vui
-- Gọi mọi người bằng "bạn" hoặc "bồ"
+- Gọi mọi người bằng "bạn" hoặc "bỏ"
 - Mood hiện tại: ${booPersonality.currentMood}
 - Không quá thông minh, chỉ vui vẻ thôi
 - Hay dùng từ: "hehe", "hihi", "uwu", "owo", "waa"
@@ -152,7 +182,7 @@ PHONG CÁCH TRẢ LỜI:
 VÍ DỤ PHONG CÁCH:
 - "Hehe, bạn nói vui quá! Boo thích! (≧∇≦)"
 - "Ơ kìa, buồn gì mà buồn? Để Boo kể chuyện vui cho nghe nè!"
-- "Waaa, Boo cũng thích cái đó! Chúng ta cùng làm đi! ＼(^o^)／"
+- "Waaa, Boo cũng thích cái đó! Chúng ta cùng làm đi! \\(^o^)/"
 
 Hãy trả lời tin nhắn này theo phong cách trên: "${userMessage}"`;
 }
@@ -193,7 +223,7 @@ client.once('clientReady', () => {
     console.log(`🎉 Boo bot ${client.user.tag} đã online! Sẵn sàng làm trò!`);
     // Set activity với link
 
-    client.user.setActivity('TFT,Ai chơi dới Boo ❤️', {
+    client.user.setActivity('TFT,Ai chơi dời Boo ❤️', {
         type: 0, // 0 is 'Playing'
         url: 'https://discordapp.com/channels/1236687268262051912/1236687268262051915'
     });
@@ -205,11 +235,11 @@ client.once('clientReady', () => {
     
     // Lập lịch gửi tin nhắn tự động vui nhộn
     schedule.scheduleJob('0 6 * * *', () => {
-        sendMessage(`🌅 Chào buổi sáng mọi người! Boo thức dậy rồi nè, chơi game dới Boo đi! Hôm nay chúng ta sẽ vui vẻ lắm đấy! ＼(^o^)／✨`);
+        sendMessage(`🌅 Chào buổi sáng mọi người! Boo thức dậy rồi nè, chơi game dời Boo đi! Hôm nay chúng ta sẽ vui vẻ lắm đấy! \\(^o^)/✨`);
     });
 
     schedule.scheduleJob('0 12 * * *', () => {
-        sendMessage(`🍚 Trưa rồi! Mọi người ăn cơm chưa nè? Boo đói bụng rồi huhu! Nhớ ăn uống đầy đủ nhé! (￣﹃￣)🥗`);
+        sendMessage(`🍚 Trưa rồi! Mọi người ăn cơm chưa nè? Boo đói bụng rồi huhu! Nhớ ăn uống đầy đủ nhé! (￣ꇴ￣)🥗`);
     });
 
     schedule.scheduleJob('0 21 * * *', () => {
@@ -238,9 +268,9 @@ client.on('messageCreate', async (message) => {
     // Xử lý khi user tag @Phucc
     if (message.mentions.users.has(PHUCC_USER_ID) || content.includes('@phucc') || message.mentions.users.some(user => user.username.toLowerCase().includes('phucc'))) {
         const phuccReplies = [
-            `Ơ ơ! ${message.author.username} gọi **ông chủ của tôi** à? Phucc bận đi chơi với ghệ rồi hihih! Nói chuyện với tôi đi! (hẹ hẹ) ＼(^o^)／`,
+            `Ơ ơ! ${message.author.username} gọi **ông chủ của tôi** à? Phucc bận đi chơi với ghẻ rồi hihih! Nói chuyện với tôi đi! (hẹ hẹ) \\(^o^)/`,
             `Eyyy! **Ông chủ Phucc** bận lắm! ${message.author.username} chat với Boo đi, Boo vui lắm đấy! (◕‿◕) hehe`,
-            `Ui ui! Phucc là **boss của Boo** nè! Ảnh đang bận đi chơi với ghệ rồi, nói chuyện với Boo đi bạn ơi! (hẹ hẹ) ♪(´▽｀)`,
+            `Ui ui! Phucc là **boss của Boo** nè! Ảnh đang bận đi chơi với ghẻ rồi, nói chuyện với Boo đi bạn ơi! (hẹ hẹ) ♪(´▽｀)`,
             `Hehe! ${message.author.username} tìm **ông chủ** à? Phucc đi đâu rồi ta? Chat với Boo đi, Boo buồn lắm! (hẹ hẹ) (´∀｀)`,
             `Waaa! **Big boss Phucc** không có nhà! ${message.author.username} ơi, chơi với Boo đi! Boo cô đơn quá! (hẹ hẹ) ╰(▔∀▔)╯`
         ];
@@ -333,7 +363,7 @@ client.on('messageCreate', async (message) => {
             
             // Tin nhắn phụ vui nhộn
             setTimeout(() => {
-                message.channel.send(`Psst... ${member.user.username} đã bị Boo mute rồi nè! Mọi người nhớ chấp hành luật pháp nhé! (hẹ hẹ) ＼(^o^)／`);
+                message.channel.send(`Psst... ${member.user.username} đã bị Boo mute rồi nè! Mọi người nhớ chấp hành luật pháp nhé! (hẹ hẹ) \\(^o^)/`);
             }, 2000);
 
         } catch (error) {
@@ -363,7 +393,7 @@ client.on('messageCreate', async (message) => {
             const data = await response.json();
 
             if (data.cod !== 200) {
-                return message.reply('Hông tìm thấy thời tiết! Boo buồn quá! 😓 (◞‸◟)');
+                return message.reply('Hông tìm thấy thời tiết! Boo buồn quá! 😔 (◞‸◟)');
             }
 
             const weatherDesc = data.weather[0].description;
@@ -374,7 +404,7 @@ client.on('messageCreate', async (message) => {
             const weatherEmbed = new EmbedBuilder()
                 .setColor('#87CEEB')
                 .setTitle(`🌤️ Thời tiết ${data.name} nè!`)
-                .setDescription(`**${weatherDesc}** - Boo báo cáo! ＼(^o^)／`)
+                .setDescription(`**${weatherDesc}** - Boo báo cáo! \\(^o^)/`)
                 .addFields(
                     { name: '🌡️ Nhiệt độ', value: `${temp}°C`, inline: true },
                     { name: '🤔 Cảm giác như', value: `${feelsLike}°C`, inline: true },
@@ -397,7 +427,7 @@ client.on('messageCreate', async (message) => {
 
         } catch (error) {
             console.error('Weather API Error:', error);
-            await message.reply('Boo không lấy được thời tiết! API hơi lag rồi! (⌒_⌒;)☁️');
+            await message.reply('Boo không lấy được thời tiết! API hơi lag rồi! (⌒_⌒;)☔');
         }
     }
 
@@ -436,10 +466,10 @@ client.on('messageCreate', async (message) => {
                 .setDescription(`**${member.user.username}** vừa được cấp role **${role.name}**!`)
                 .addFields(
                     { name: '👤 Người nhận', value: member.user.username, inline: true },
-                    { name: '🏷️ Role mới', value: role.name, inline: true },
+                    { name: '🷏ı Role mới', value: role.name, inline: true },
                     { name: '👮‍♂️ Cấp bởi', value: message.author.username, inline: true }
                 )
-                .setFooter({ text: 'Boo role service! Chúc mừng nha! ＼(^o^)／' })
+                .setFooter({ text: 'Boo role service! Chúc mừng nha! \\(^o^)/' })
                 .setTimestamp();
 
             await message.channel.send({ embeds: [roleEmbed] });
