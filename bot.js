@@ -233,9 +233,9 @@ client.on('messageCreate', async (message) => {
     // Xử lý khi user tag @Phucc
     if (message.mentions.users.has(PHUCC_USER_ID) || content.includes('@phucc') || message.mentions.users.some(user => user.username.toLowerCase().includes('phucc'))) {
         const phuccReplies = [
-            `Ơ ơ! ${message.author.username} gọi **ông chủ của tôi** à? Phucc đi bận rồi! Nói chuyện với tôi đi! (hẹ hẹ) ＼(^o^)／`,
+            `Ơ ơ! ${message.author.username} gọi **ông chủ của tôi** à? Phucc bận đi chơi với ghệ rồi hihih! Nói chuyện với tôi đi! (hẹ hẹ) ＼(^o^)／`,
             `Eyyy! **Ông chủ Phucc** bận lắm! ${message.author.username} chat với Boo đi, Boo vui lắm đấy! (◕‿◕) hehe`,
-            `Ui ui! Phucc là **boss của Boo** nè! Ảnh đang bận, nói chuyện với Boo đi bạn ơi! (hẹ hẹ) ♪(´▽｀)`,
+            `Ui ui! Phucc là **boss của Boo** nè! Ảnh đang bận đi chơi với ghệ rồi, nói chuyện với Boo đi bạn ơi! (hẹ hẹ) ♪(´▽｀)`,
             `Hehe! ${message.author.username} tìm **ông chủ** à? Phucc đi đâu rồi ta? Chat với Boo đi, Boo buồn lắm! (hẹ hẹ) (´∀｀)`,
             `Waaa! **Big boss Phucc** không có nhà! ${message.author.username} ơi, chơi với Boo đi! Boo cô đơn quá! (hẹ hẹ) ╰(▔∀▔)╯`
         ];
