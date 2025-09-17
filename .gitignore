@@ -1,0 +1,8 @@
+# Bỏ node_modules
+node_modules/
+
+# Bỏ file môi trường
+.env
+
+# Bỏ file hệ thống macOS
+.DS_Store
