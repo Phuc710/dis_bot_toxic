@@ -190,8 +190,13 @@ function parseDuration(time) {
 
 // Khi bot online
 client.once('ready', () => {
-    console.log(`🎉 Boo bot hài hước ${client.user.tag} đã online! Sẵn sàng làm trò!`);
-    
+    console.log(`🎉 Boo bot ${client.user.tag} đã online! Sẵn sàng làm trò!`);
+    // Set activity với link
+
+    client.user.setActivity('Chơi TFT dới Boo ❤️', {
+        type: 0, // 0 is 'Playing'
+        url: 'https://discordapp.com/channels/1236687268262051912/1236687268262051915'
+    });
     // Thay đổi mood mỗi 2 tiếng
     schedule.scheduleJob('0 */2 * * *', () => {
         booPersonality.changeMood();
@@ -200,7 +205,7 @@ client.once('ready', () => {
     
     // Lập lịch gửi tin nhắn tự động vui nhộn
     schedule.scheduleJob('0 6 * * *', () => {
-        sendMessage(`🌅 Chào buổi sáng mọi người! Boo thức dậy rồi nè! Hôm nay chúng ta sẽ vui vẻ lắm đấy! ＼(^o^)／✨`);
+        sendMessage(`🌅 Chào buổi sáng mọi người! Boo thức dậy rồi nè, chơi game dới Boo đi! Hôm nay chúng ta sẽ vui vẻ lắm đấy! ＼(^o^)／✨`);
     });
 
     schedule.scheduleJob('0 12 * * *', () => {
