@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const http = require('http');
 require('dotenv').config();
-//toxic bot
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
