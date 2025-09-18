@@ -448,7 +448,7 @@ client.on('messageCreate', async (message) => {
         const availableMoods = Object.keys(moodPrompts);
 
         if (!newMood) {
-            return message.reply(`Mood hiện tại: ${mood}\nMày muốn tao đổi sang mood nào? Các mood của Boo nè: ${availableMoods.join(', ')}`);
+            return message.reply(`Mày muốn tao đổi sang mood nào? Các mood của Boo nè: ${availableMoods.join(', ')}`);
         }
 
         if (availableMoods.includes(newMood)) {
