@@ -421,14 +421,13 @@ client.on('messageCreate', async (message) => {
     if (command === 'help') {
         const helpEmbed = new EmbedBuilder()
             .setColor('#7289da')
-            .setTitle('📖 Lệnh Của Boo Toxic Bot! (hẹ hẹ)')
+            .setTitle('📖 Lệnh Của Boo! (hẹ hẹ)')
             .setDescription('Mày cần tao giúp gì hả dumme? Đây là mấy lệnh mày có thể dùng nè:')
             .addFields(
                 { name: '😂 Lệnh Vui', value: '`!gacha`\n`!trollpic`\n`!boi`\n`!mood <mood_mới>`', inline: true },
                 { name: '🛠️ Lệnh Dành cho Admin', value: '`!mute <user> <thời gian>`\n`!role <user> <tên_role>`', inline: true },
                 { name: '🔎 Lệnh Khác', value: '`!weather <thành_phố>`\n`@Boo` hoặc `boo ...`', inline: true },
                 { name: '\u200b', value: '\u200b' },
-                { name: 'Lưu ý:', value: 'Mấy lệnh **admin** chỉ có admin mới được dùng nha ngu! \nMấy lệnh **vui** thì ai cũng chơi được. Cười đi! 😂' }
             )
             .setFooter({ text: 'Boo toxic, nhưng Boo cũng giúp đỡ nha! (hẹ hẹ)' })
             .setTimestamp();
@@ -449,12 +448,12 @@ client.on('messageCreate', async (message) => {
         const availableMoods = Object.keys(moodPrompts);
 
         if (!newMood) {
-            return message.reply(`Mày muốn tao đổi sang mood nào, dumme? Các mood hiện có nè: ${availableMoods.join(', ')}`);
+            return message.reply(`Mood hiện tại: ${mood}\nMày muốn tao đổi sang mood nào? Các mood của Boo nè: ${availableMoods.join(', ')}`);
         }
 
         if (availableMoods.includes(newMood)) {
             booPersonality.currentMood = newMood;
-            await message.reply(`Được thôi, dumme! Từ giờ tao sẽ ở mood **${newMood}** cho mày xem! (hẹ hẹ)`);
+            await message.reply(`Được thôi! Từ giờ tao sẽ ở mood **${newMood}** cho mày xem! (hẹ hẹ)`);
         } else {
             await message.reply(`Mood **${newMood}** là cái gì vậy? Tao không biết! Chọn cái khác đi, đồ xàmloz!`);
         }
