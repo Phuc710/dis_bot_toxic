@@ -377,7 +377,7 @@ function parseDuration(time) {
 
 client.once('clientReady', () => {
     console.log(`🎉 ${client.user.tag} đã online! Sẵn sàng làm trò!`);
-    client.user.setActivity('TFT 3333 ❤️', {
+    client.user.setActivity('TFT dới Boo ❤️', {
         type: 0,
         url: 'https://discordapp.com/channels/1236687268262051912/1236687268262051915'
     });
