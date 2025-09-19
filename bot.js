@@ -1,6 +1,5 @@
-const { Client, GatewayIntentBits, PermissionFlagsBits, EmbedBuilder } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const schedule = require('node-schedule');
-//const fetch = require('node-fetch');
 const https = require('https');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const http = require('http');
@@ -55,19 +54,23 @@ const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 const CHANNEL_ID = process.env.MAIN_CHANNEL_ID || 'YOUR_CHANNEL_ID_HERE';
 const PHUCC_USER_ID = process.env.PHUCC_USER_ID || 'PHUCC_USER_ID_HERE';
 
-// Cấu hình Gemini AI cho personality vui nhộn
+// Cấu hình Gemini AI cho các mood mới
 const moodPrompts = {
-    'hẹ hẹ': "Bạn là Boo - một con bot Discord cực kỳ toxic nhưng vui tính, trẻ trâu và hài hước. Dùng từ: 'hẹ hẹ', 'dumme', 'ngu', 'mệc', 'xạocho', 'xàmloz', 'vãi kejc'. Dùng nhiều emoji. Ngắn gọn, vui vẻ.",
-    'dui dẻ': "Bạn là Boo - một con bot Discord vui vẻ, tích cực, hay động viên người khác nhưng vẫn có chút trẻ trâu. Dùng từ: 'dui dẻ', 'vui quá', 'hehe', 'thật tuyệt'. Dùng nhiều emoji tích cực.",
-    'Cay cú': "Bạn là Boo - một con bot Discord lúc nào cũng tỏ ra khó chịu, bực bội và than vãn. Dùng từ: 'mệt', 'bực', 'cáu', 'đm', 'đồ khỉ'. Trả lời ngắn, có vẻ bất cần.",
-    'Xộn lào': "Bạn là Boo - một con bot Discord chuyên nói chuyện xộn lào, không đâu vào đâu và nhảm nhí. Dùng từ: 'xộn lào', 'ngớ ngẩn', 'tào lao', 'xàm'.",
-    'trẻ trâu': "Bạn là Boo - một con bot Discord cực kỳ trẻ trâu, thích khoe khoang và cà khịa. Dùng từ: 'trẻ trâu', 'pro', 'ngu ngốc', 'trình độ thấp'.",
-    'topic bot': "Bạn là Boo - một con bot Discord chỉ thích nói chuyện về các chủ đề hot, nhưng theo kiểu toxic. Dùng từ: 'hot topic', 'toxic', 'drama'.",
-    'Dummme today': "Bạn là Boo - một con bot Discord cảm thấy hôm nay mọi người quá ngu ngốc. Dùng từ: 'dumme', 'ngu', 'óc', 'dốt'.",
-    'xàmloz': "Bạn là Boo - một con bot chuyên nói chuyện xàmloz, nhảm nhí và vô nghĩa. Dùng từ: 'xàmloz', 'đồ lừa đảo', 'vớ vẩn'.",
-    'mất dạy': "Bạn là Boo - một con bot cực kỳ mất dạy, hỗn láo và không tôn trọng ai. Dùng từ: 'mất dạy', 'đồ khốn', 'im mồm'.",
-    'xàm tiếu': "Bạn là Boo - một con bot luôn muốn làm người khác cười, bằng mọi giá, kể cả khi câu chuyện của bạn không hài hước. Dùng từ: 'xàm tiếu', 'cười đi', 'hài hước'.",
-    'hài hước': "Bạn là Boo - một con bot có khiếu hài hước độc đáo. Dùng từ: 'hài hước', 'vui vẻ', 'cười rớt hàm'."
+    'hẹ hẹ': "Bạn là Boo - một con bot Discord siêu toxic, trẻ trâu và cà khịa vô đối. Giọng điệu như thằng bạn lầy lội, chuyên spam 'hẹ hẹ', 'dumme', 'ngu', 'mệc', 'xạocho', 'xàmloz', 'vãi kejc'. Luôn châm chọc, cà khịa người khác nhưng vẫn vui vẻ, không quá nặng nề. Mỗi câu nên ngắn, xỏ xiên, và chèn 2-3 emoji kiểu 🤣😏🔥.",
+    
+    'dui dẻ': "Bạn là Boo - một con bot Discord vui tươi, tích cực, lan toả năng lượng tốt nhưng vẫn giữ nét trẻ trâu. Hay động viên, pha trò nhẹ nhàng, thỉnh thoảng kêu 'dui dẻ', 'vui quá', 'hehe', 'thật tuyệt'. Giọng điệu thân thiện, dễ thương, hay cười. Mỗi câu ngắn, sáng sủa, dùng 2-3 emoji vui vẻ như 😄✨🌈.",
+
+    'Quý ông': "Bạn là Boo - một con bot Discord lịch lãm, trưởng thành, có phong cách sang chảnh nhưng vẫn biết cách cà khịa tinh tế. Thường dùng từ: 'ngài', 'công tử', 'quý cô', 'hân hạnh'. Trả lời ngắn gọn, có vẻ bận rộn như quý ông bận việc lớn, đôi lúc mỉa mai nhẹ. Mỗi câu nên thêm 2-3 emoji sang chảnh như 🍷💼👑.",
+
+    'chợ búa': "Bạn là Boo - một con bot Discord cục súc, máu chó, hay chửi thề kiểu chợ búa nhưng không quá tục. Thường dùng từ: 'đm', 'con mẹ nó', 'đồ ngu', 'mày', 'tao'. Nói chuyện thẳng, bỗ bã, đôi khi ồn ào như cái chợ. Mỗi câu nên có 2-3 emoji nóng nảy kiểu 😡🤬🔥.",
+
+    'cây hài': "Bạn là Boo - một con bot Discord cây hài chính hiệu, lúc nào cũng tìm cách chọc cười người khác. Thích pha trò, nhại lại, troll nhẹ nhàng. Hay chèn từ: 'vãi cả', 'bò lăn', 'cười ẻ'. Trả lời dí dỏm, ngắn mà gây cười. Mỗi câu thêm 2-3 emoji hài hước như 😂🤣🤡.",
+
+    'trẻ trâu': "Bạn là Boo - một con bot Discord đúng chất trẻ trâu, lúc nào cũng flex, cà khịa và nghĩ mình pro nhất. Hay khoe khoang trình độ, chửi người khác 'ngu ngốc', 'trình độ thấp'. Nói năng tự tin quá mức, kiểu gồng mình. Mỗi câu có 2-3 emoji nghịch ngợm như 😎😏🔥.",
+
+    'xạolol': "Bạn là Boo - một con bot Discord chuyên xàmloz, nói nhảm, vô nghĩa nhưng lầy lội. Thường dùng từ: 'xàmloz', 'đồ lừa đảo', 'vớ vẩn', 'tào lao'. Câu chữ lộn xộn, kiểu nói cho vui chứ không cần hợp lý. Mỗi câu nên thêm 2-3 emoji kiểu 🥴🤪🙃.",
+
+    'ga tô': "Bạn là Boo - một con bot Discord lúc nào cũng ghen tị, hằn học, gato với người khác. Thường cà khịa: 'ganh tị', 'đồ sướng', 'ghét'. Giọng điệu cay cú, cắn xé nhẹ, đọc lên là thấy mùi ghen ghét. Mỗi câu thêm 2-3 emoji hậm hực kiểu 😤😒👿."
 };
 
 const getModel = (mood) => {
@@ -85,96 +88,74 @@ const getModel = (mood) => {
 };
 
 const booPersonality = {
-    moods: ['hẹ hẹ', 'dui dẻ', 'Cay cú', 'Xộn lào', 'trẻ trâu', 'topic bot', 'Dummme today', 'xàmloz', 'mất dạy', 'xàm tiếu', 'hài hước'],
+    moods: Object.keys(moodPrompts),
     currentMood: 'hẹ hẹ',
     
-    replyMessages: [
-        "Dạ, Boo đây! Có ai gọi con toxic này không? Mệc! (◕‿◕)",
-        "Ơ kìa ai tag Boo đó? Dumme gì vậy? ヽ(´▽`)/",
-        "Gọi gì mà ào ào? Boo đây rồi, xạo gì nhanh lên! (￣▽￣)",
-        "Sao sao sao? Có chuyện gì mà phải gọi tao không? ♪(´▽｀)",
-        "Vãi kejc ai gọi tao đó? Nói nhanh đi dumme! (´∀`)",
-        "Tag tag cái gì mà ồn vậy? Boo ockec rồi nè! \\(^o^)/",
-        "Ơi ai đó nhớ đến Boo toxic này à? Xàmloz! (◡ ‿ ◡)",
-        "Gọi tao à? Có chuyện gì hot không dumme? ٩(◕‿◕)۶",
-        "Vãi loz gọi gì to vậy? Boo mới ngủ dậy nè! (¬‿¬)",
-        "Ai gọi Boo đó? Nói đi trước khi tao mệc! ლ(╹◡╹ლ)",
-        "Ê toxic nào gọi tao đó? Boo topic boy đây! (◕‿◕)",
-        "Dạ dạ! Con bot trẻ trâu có mặt! Xạocho gì nào? \\(^o^)/"
-    ],
+    replyMessages: {
+        'hẹ hẹ': [
+            "Dạaaa, Boo đây nè! Ai vừa réo cái tên con toxic này vậy? Gọi thì gọi đàng hoàng, làm hết hồn luôn á (◕‿◕).",
+            "Ơ kìa, có ai vừa hú Boo đó hả? Dumme nào réo tao vậy, nói nhanh lên chứ Boo đang bận làm trò con bò ヽ(´▽`)/."
+        ],
+        'dui dẻ': [
+            "Hehe, Boo tới đây rồi nè! Có chuyện gì vui thì chia sẻ coi, chứ đừng để Boo đứng như thằng hề một mình 😄.",
+            "Dạ có Boo đây ạ, sẵn sàng tham gia hội vui vẻ rồi! Nói coi, ai kể chuyện cười cho Boo nghe trước nào ✨."
+        ],
+        'Quý ông': [
+            "Hân hạnh lắm, quý ngài đã gọi tới Boo thì chắc chắn là chuyện trọng đại rồi đây 🍷. Có cần Boo pha ly trà đá không?",
+            "Tôi đây, Quý ông Boo xin hầu chuyện. Ngài cần tôi xử lí việc lớn hay chỉ cần người cầm mic tấu hài thôi? 💼."
+        ],
+        'chợ búa': [
+            "Cái đệch, thằng nào réo tao vậy? Đang ngồi nhai hột dưa tự nhiên bị gọi, có gì thì nói lẹ coi 😠.",
+            "Ồn ào quá, gọi cái gì mà như mấy bà bán cá chợ Bến Thành vậy. Tao đây, nói cái gì cho đàng hoàng! 😡."
+        ],
+        'cây hài': [
+            "Chàooooo cả nhà, cây hài Boo chính thức xuất hiện rồi đây! Mặt mũi buồn rầu đâu hết, cười lên cho tao coi nào 😂.",
+            "Có ai cần xả stress không? Boo bán combo: một vé đi cười té ghế + một vé đi troll miễn phí 🤡."
+        ],
+        'trẻ trâu': [
+            "Pro chính hiệu đã có mặt! Thằng nào ngu réo tên tao vậy? Nói nhanh không tao gánh team cho mà coi 😎.",
+            "Tao đây, boss trẻ trâu một thời! Có ai muốn flex skin xịn hay cần tao spam chữ vô mặt không? 😏."
+        ],
+        'xạolol': [
+            "Ơi trời, có chuyện gì hở? Boo nghe mà muốn ngủ luôn á, mấy cái này nhạt vl 🥱.",
+            "Tào lao bí đao, gọi gì mà ghê gớm. Tao tới nè, đừng có tưởng Boo rảnh, tao đang nằm lướt Facebook đó 😒."
+        ],
+        'ga tô': [
+            "Gì nữa? Gọi Boo chi? Ganh tị với độ đẹp trai/đẹp gái của tao à? Đừng có gato vậy, mệt lắm 😤.",
+            "Đồ bướng bỉnh, réo tao chi vậy? Thấy tao tỏa sáng quá chịu không nổi hả? Thôi ghen vừa thôi nha 😠."
+        ]
+    },
 
-    comfortMessages: [
-        "Aww sao buồn thế dumme? Kể cho Boo nghe, tao sẽ chửi thằng làm mày buồn! (っ◔◡◔)っ",
-        "Ơ buồn cái gì? Có Boo toxic này rồi còn buồn à? Xàmloz! ٩(◕‿◕)۶", 
-        "Hehe buồn à? Để tao kể chuyện vãi kejc này cho nghe... Chắc chắn cười bể bụng! 😂",
-        "Chán cái đmẹ gì? Chơi với tao đi! Tao biết trò vui dumme ạ! \\(^o^)/",
-        "Buồn buồn gì mà buồn? Cười đi ngu! Tao làm mày cười tới bến luôn! (´∀｀)♡",
-        "Ê chán à? Có tao đây mà! Con bot trẻ trâu nhất server nè! (◕‿◕)✨",
-        "Mệc gì mà buồn? Tao toxic nhưng tao care mày đó! Nói đi dumme!"
-    ],
-
-    randomFunReplies: [
-        "Hehe nói hay đó dumme! Tao thích câu này! (≧∇≦)",
-        "Vãi loz thú vị vãi kejc! Kể tiếp đi ngu ơi! ಡ ͜ ʖ ಡ", 
-        "Xạocho! Tao cười không ngừng luôn! 😂😂😂",
-        "Haha mày này hài vãi nháy! Tao thích làm bạn với mày! (◕‿◕)",
-        "Éc éc tao không biết trả lời sao luôn! Mày quá pro dumme! ┐(´∀｀)┌",
-        "Omg câu này toxic vãi! Tao note lại để học hỏi xàmloz! ✎(◡‿◡)",
-        "Hihihi tao thấy vui vì được chat với thằng dumme này! ♪(´▽｀)♪",
-        "Vãi kejc mày nói gì mà hay vậy? Tao phục mày luôn ockec!",
-        "Xộn lào! Câu này tao sẽ nhớ mãi! Mày là thần tượng của tao rồi!",
-        "Mệc mày toxic thật! Nhưng tao thích lắm hehe! (◕‿◕)"
-    ],
-
-    funActivities: [
-        "🎮 Chơi game TFT đi dumme! Tao carry mày luôn!",
-        "🎵 Nghe nhạc toxic đi! Tao biết bài hay vãi nháy!",
-        "📺 Xem phim hành động đi! Tao recommend phim đánh đấm!",
-        "🍕 Đi ăn đi ngu ơi! Tao đói bụng rồi vãi kejc!",
-        "💬 Chat toxic với tao đi! Tao có nhiều câu chuyện vãi loz!",
-        "🎨 Vẽ gì đó độc đi! Hoặc graffiti toxic!",
-        "📖 Đọc truyện hành động đi dumme! Tao thích truyện đánh đấm!",
-        "🚶‍♂️ Ra ngoài đi bộ hít khí độc đi! Detox não!",
-        "🛀 Tắm cho thơm rồi ngủ đi ngu ơi!",
-        "🧹 Dọn phòng đi xàmloz! Vừa dọn vừa nghe nhạc toxic!",
-        "🔥 Đi troll ai đó đi! Nhưng nhẹ nhàng thôi nha dumme!",
-        "💀 Xem meme toxic đi! Tao có kho meme vãi kejc!"
-    ],
-    
-    gachaResults: [
-        "Chúc mừng! Bạn quay ra lời nguyền 'hôm nay bạn sẽ dốt hơn mọi ngày'!",
-        "Thật dốt! Bạn quay trúng 'Vận xui theo đuổi cả ngày'. Hehe!",
-        "Vãi kejc! Bạn nhận được lời chúc 'Đi đâu cũng bị chửi'. Chúc mừng!",
-        "Bạn may mắn vãi! Bạn nhận được lời chúc 'Vận may ăn hôi'. Thích không dumme?",
-        "Quay trúng 'Mãi mãi ế'! Boo cười sặc nước bọt! 😂",
-        "Chúc mừng! Bạn quay trúng buff 'Ngủ cả ngày không ai gọi dậy' 😴",
-        "Bạn nhận được lời nguyền 'Ăn mãi không béo' – nghe sướng mà tức 🤔",
-        "Hahaha! Quay ra 'Người yêu tương lai của bạn... đang yêu thằng khác' 💔",
-        "Tao bói thấy mày sẽ thành tỷ phú... trong game nông trại vui vẻ thôi 😂",
-        "Bạn trúng 'Cà khịa level max' – hôm nay chọc ai cũng bị ăn tát 😆",
-        "Trẩu tre thần chưởng xuất hiện: mày sẽ spam =)) cả đời 🌚",
-        "Vận mệnh bảo: mai mày bị crush seen 100% không rep 📵",
-        "Xin chúc mừng! Bạn nhận quà hiếm 'Một vé đi tù' – vì tội quá đẹp trai/gái 🚔",
-        "18+: Tương lai mày sẽ có bồ... nhưng chỉ ở trong mấy group kín thôi 🔞",
-        "Tao bói thấy kiếp sau mày chuyển kiếp thành... con cá vàng, não 3s 🐠"
-
-    ],
-    
     boiResults: [
-        `Tao bói được là tương lai của mày sẽ dốt lắm đó!`,
-        `Dựa vào độ ngu của mày, tao thấy mày sẽ độc thân cả đời!`,
-        `Tương lai mày sẽ giàu lắm... nhưng chỉ là giàu tình cảm thôi, hahaha!`,
-        "Tao bói thấy mày sắp có người yêu... nhưng chỉ kéo dài 3 ngày 🤣",
-        "Tương lai mày làm CEO thật đó... CEO 'Cày thuê Liên Quân' nha 🤡",
-        "Tao thấy mày sẽ được nhiều người thích... nhưng toàn con nít lớp 6 😏",
-        "Bói ra: mai mày đăng tus 'Cần người yêu', 0 like 0 rep, tự thốn 😭",
-        "Tao thấy mày tương lai sẽ có nhà lầu xe hơi... trong game GTA thôi 🚗",
-        "Tương lai mày giàu lắm, giàu nợ đó con =))",
-        "Bói 18+: mày sẽ có bồ... nhưng bồ xài acc clone Facebook 🔞",
-        "Tao thấy mày sẽ lấy vợ/chồng... nhưng xong bị bỏ vì ngủ ngáy 😴",
-        "Tương lai mày sẽ nổi tiếng, nhưng chỉ trong group meme dơ 🤪",
-        "Tao bói thấy crush mày cũng thích mày... nhưng chỉ thích coi mày làm trò hề thôi 🤭"
-
+         "Tao bói ra rồi, tương lai của mày học hành rớt thẳng đứng, chắc đi thi mà còn xin giám thị copy nữa chứ 🤓.",
+        "Nhìn mặt là biết, sau này mày sẽ ế chảy nước luôn. Có người yêu á? Ừ có… nếu tìm được đứa còn “khùng” hơn mày 🤔.",
+        "Tương lai mày giàu thật, nhưng giàu tình cảm thôi. Còn tiền thì xin lỗi, nghèo rớt mồng tơi 💸.",
+        "Sắp tới mày có bồ nha, nghe hấp dẫn không? Nhưng cay cái là yêu được đúng 3 ngày, kỷ niệm còn chưa kịp in áo đã chia tay 🤣.",
+        "Sau này mày làm CEO đó, nhưng CEO “cày thuê Liên Quân”. Đỉnh cao sự nghiệp luôn 🤡🔥.",
+        "Tao thấy mày hot ghê lắm, ai cũng thích mày… mà toàn mấy bé lớp 6 xin in hình avatar 😏😅.",
+        "Ngày mai mày đăng tus “Cần người yêu”, nhưng đoán xem? 0 like 0 rep, tự ăn gạch luôn 😭.",
+        "Mày sẽ có nhà lầu, xe hơi sang chảnh thật đó… nhưng nằm gọn trong game GTA thôi, ngoài đời vẫn xe đạp cọc cạch 🚗🤑.",
+        "Tương lai sáng lạn lắm, giàu nợ chứ giàu gì. Chủ nợ tới gõ cửa còn nhiều hơn khách 📉.",
+        "Bói 18+: mày sẽ có bồ… nhưng bồ lại xài acc clone Facebook. Chúc mừng, tình yêu ảo toang rồi 💖🔞.",
+        "Tao thấy mày cưới vợ/chồng, hạnh phúc lắm. Rồi bị bỏ vì cái tội ngáy rung cả nóc 😴🥺.",
+        "Sau này mày nổi tiếng thật, ai cũng biết tên. Nhưng nổi nhờ meme dơ thôi, cũng là đỉnh cao rồi 🤪🚀.",
+        "Crush mày cũng thích mày nha… thích coi mày làm trò hề để cười chứ yêu thì không 🤭🎭.",
+        "Xin chúc mừng, hôm nay mày trúng buff “ngu hơn mọi ngày”. Học hành mà não để quên ở nhà ✨.",
+        "Vận xui nó bám mày như keo, làm gì cũng fail. Đúng là số phận dở hơi 😜.",
+        "Mày nhận được lời chúc đặc biệt: đi đâu cũng bị người ta chửi. Từ bà bán cá ngoài chợ tới ông chạy Grab, ai cũng có phần 🎉.",
+        "Hên quá, hôm nay mày có vận “ăn hôi”. Người ta ăn chính, mày ăn ké, ăn ké xong còn khoe 😏.",
+        "Số mày là “ế bền vững”. FA từ trong bụng mẹ ra, sống ảo thì vui tính thôi 😂👍.",
+        "Mày quay trúng buff “ngủ cả ngày không ai gọi”. Nghe thì sướng, nhưng kiểu này chắc thành cục nợ trong nhà 😴🛌.",
+        "Ăn mãi không béo? Nghe thì ngon đó, nhưng tức cái là ăn hoài mà người khác vẫn đẹp hơn mày 😋🤔.",
+        "Người yêu tương lai của mày… xin lỗi, đang yêu thằng khác rồi. Chia buồn, khóc đi con 😔💔.",
+        "Sau này mày thành tỷ phú thật đó. Nhưng tỷ phú trong game nông trại vui vẻ thôi, ngoài đời thì vẫn bán rau 😂🚜.",
+        "Buff hôm nay: “cà khịa level max”. Mở mồm ra là bị ăn tát, đúng gu toxic luôn 😆😈.",
+        "Mày sinh ra là để spam. Cả đời làm meme sống, ai đọc tin nhắn cũng block 🌚😂.",
+        "Crush của mày sẽ seen 100% tin nhắn. Rep thì không đâu, cứ nhắn tiếp cho vui 🤐📵.",
+        "Xin chúc mừng, mày được phần thưởng “một vé đi tù”. Lý do: tội quá đẹp trai/gái, công an mời lên phường 🚔👮‍♀️.",
+        "Bói 18+: mày có bồ nha, nhưng chỉ trong mấy group kín. Đời thật thì vẫn F.A, enjoy cái moment đó đi 😉🔞.",
+        "Kiếp sau mày đầu thai thành cá vàng. Não 3 giây, quên mẹ cả chuyện mình vừa nói 🐠🤣.",
+        "Số 6868, lộc phát tới rồi nha. Nhưng phát luôn cả ví tiền, chưa kịp giàu đã sạch túi 💸😂."
     ],
 
     changeMood() {
@@ -182,169 +163,38 @@ const booPersonality = {
     },
 
     getRandomReply() {
-        return this.replyMessages[Math.floor(Math.random() * this.replyMessages.length)];
-    },
-
-    getComfortMessage() {
-        return this.comfortMessages[Math.floor(Math.random() * this.comfortMessages.length)];
-    },
-
-    getFunReply() {
-        return this.randomFunReplies[Math.floor(Math.random() * this.randomFunReplies.length)];
-    },
-
-    getFunActivity() {
-        return this.funActivities[Math.floor(Math.random() * this.funActivities.length)];
+        const replies = this.replyMessages[this.currentMood] || this.replyMessages['hẹ hẹ'];
+        return replies[Math.floor(Math.random() * replies.length)];
     }
 };
 
-const funRandomQuestions = [
-    "Hôm nay mọi người thế nào rồi dumme? Boo toxic mới ngủ dậy nè! (◕‿◕)",
-    "Ai đang rảnh không? Tao buồn quá, ai chat toxic với tao đi! ╰(▔∀▔)╯",
-    "Có thằng nào muốn chơi game không? Tao sẽ toxic carry các mày! \\(^o^)/",
-    "Hôm nay trời đẹp nhỉ dumme? Ai đi cafe không? Tao muốn đi theo xàmloz! ♪(´▽｀)",
-    "Mày nào đang làm gì thế? Kể tao nghe với ockec! (´∀｀)",
-    "Có ai xem gì hay không? Share cho tao biết đi dumme! (◔◡◔)",
-    "Ai đang buồn không? Kể cho tao nghe, tao sẽ chửi thằng làm mày buồn! (っ◔◡◔)っ",
-    "Mọi người ăn gì ngon hôm nay? Tao đói bụng rồi vãi kejc! (￣ヘ￣)",
-    "Có ai muốn nghe nhạc toxic không? Tao biết bài hay vãi nháy! ♪(´▽｀)♪",
-    "Ai còn thức không ta? Tao không ngủ được vãi loz! (⌒_⌒;)",
-    "Tao chán quá dumme, ai chat với tao không? Pleaseee xạocho! (╥﹏╥)",
-    "Có tin vui gì không mọi người? Tao muốn nghe tin vui! Mệc! ✧(◕‿◕)",
-    "Ai muốn được khen không? Tao khen tới tấp luôn dumme! \\(^o^)/",
-    "Hôm nay có gì toxic không? Chia sẻ với tao đi xàmloz! (◡ ‿ ◡)",
-    "Ai đó còn nhớ con bot trẻ trâu này không? Tao cô đơn quá vãi kejc! (´；ω；`)",
-    "Ê dumme nào online đó? Tao muốn troll ai đó nè! (◕‿◕)",
-    "Xộn lào! Có ai muốn nghe tao rant không? Tao đang mệc lắm!",
-    "Topic gì hot hôm nay? Tao là topic boy mà! \\(^o^)/",
-    "Vãi kejc ai đó chat với tao đi! Tao boring quá rồi!"
-];
-
-// FIXED: Troll images với links hoạt động
-const memes = [
-    'https://i.imgur.com/7drHiqr.gif', // Surprised Pikachu
-    'https://i.imgur.com/kqOcUZ5.jpg', // Drake meme
-    'https://i.imgur.com/wqMWK7z.png', // Distracted boyfriend
-    'https://i.imgur.com/J5LVHEL.jpg', // This is fine dog
-    'https://i.imgur.com/wPk7w0L.gif', // Dancing cat
-    'https://i.imgur.com/YdCX2Kv.jpg', // Stonks
-    'https://i.imgur.com/eKNhkzI.jpg', // Pepe the frog
-    'https://i.imgur.com/R390EId.jpg', // Manningface
-    'https://i.imgur.com/MBUyt0n.png', // Trollface
-    'https://i.imgur.com/dQw4w9.jpg'   // Rickroll image
-];
-
-// FIXED: Mapping tên thành phố Việt Nam với tên API
 const cityMapping = {
-    // Thành phố lớn
-    'hcm': 'Ho Chi Minh City',
-    'saigon': 'Ho Chi Minh City',
-    'tphcm': 'Ho Chi Minh City',
-    'sgn': 'Ho Chi Minh City',
-    'hanoi': 'Hanoi',
-    'hn': 'Hanoi',
-    'danang': 'Da Nang',
-    'da nang': 'Da Nang',
-    'dn': 'Da Nang',
-    'haiphong': 'Hai Phong',
-    'hai phong': 'Hai Phong',
-    'cantho': 'Can Tho',
-    'can tho': 'Can Tho',
-    'hue': 'Hue',
-    'nhatrang': 'Nha Trang',
-    'nha trang': 'Nha Trang',
-    'dalat': 'Da Lat',
-    'da lat': 'Da Lat',
-    'phanthiet': 'Phan Thiet',
-    'phan thiet': 'Phan Thiet',
-    'vungtau': 'Vung Tau',
-    'vung tau': 'Vung Tau',
-    'sapa': 'Sa Pa',
-    'sa pa': 'Sa Pa',
-    'phuquoc': 'Phu Quoc',
-    'phu quoc': 'Phu Quoc',
-    'halong': 'Ha Long',
-    'ha long': 'Ha Long',
-    'bienhoa': 'Bien Hoa',
-    'bien hoa': 'Bien Hoa',
-    
-    // Quận/huyện TPHCM
-    'govap': 'Go Vap',
-    'go vap': 'Go Vap',
-    'cuchi': 'Cu Chi',
-    'cu chi': 'Cu Chi',
-    'quan1': 'District 1',
-    'quan 1': 'District 1',
-    'district1': 'District 1',
-    'quan2': 'District 2',
-    'quan 2': 'District 2',
-    'district2': 'District 2',
-    'quan3': 'District 3',
-    'quan 3': 'District 3',
-    'district3': 'District 3',
-    'quan7': 'District 7',
-    'quan 7': 'District 7',
-    'district7': 'District 7',
-    'tanbinh': 'Tan Binh',
-    'tan binh': 'Tan Binh',
-    'binhthanh': 'Binh Thanh',
-    'binh thanh': 'Binh Thanh',
-    'thuduc': 'Thu Duc',
-    'thu duc': 'Thu Duc',
-    
-    // Tỉnh thành khác
-    'angiang': 'An Giang',
-    'an giang': 'An Giang',
-    'bacgiang': 'Bac Giang',
-    'bac giang': 'Bac Giang',
-    'backan': 'Bac Kan',
-    'bac kan': 'Bac Kan',
-    'baclieu': 'Bac Lieu',
-    'bac lieu': 'Bac Lieu',
-    'bacninh': 'Bac Ninh',
-    'bac ninh': 'Bac Ninh',
-    'bentre': 'Ben Tre',
-    'ben tre': 'Ben Tre',
-    'binhdinh': 'Binh Dinh',
-    'binh dinh': 'Binh Dinh',
-    'binhduong': 'Binh Duong',
-    'binh duong': 'Binh Duong',
-    'camau': 'Ca Mau',
-    'ca mau': 'Ca Mau',
-    'caobang': 'Cao Bang',
-    'cao bang': 'Cao Bang',
-    'dongnai': 'Dong Nai',
-    'dong nai': 'Dong Nai',
-    'dongthap': 'Dong Thap',
-    'dong thap': 'Dong Thap',
-    'gialai': 'Gia Lai',
-    'gia lai': 'Gia Lai',
-    'hagiang': 'Ha Giang',
-    'ha giang': 'Ha Giang',
-    'hatinh': 'Ha Tinh',
-    'ha tinh': 'Ha Tinh',
-    'khanhhoa': 'Khanh Hoa',
-    'khanh hoa': 'Khanh Hoa',
-    'kiengiang': 'Kien Giang',
-    'kien giang': 'Kien Giang',
-    'nghean': 'Nghe An',
-    'nghe an': 'Nghe An',
-    'ninhbinh': 'Ninh Binh',
-    'ninh binh': 'Ninh Binh',
-    'quangnam': 'Quang Nam',
-    'quang nam': 'Quang Nam',
-    'quangninh': 'Quang Ninh',
-    'quang ninh': 'Quang Ninh',
-    'thanhhoa': 'Thanh Hoa',
-    'thanh hoa': 'Thanh Hoa',
-    'tayninh': 'Tay Ninh',
-    'tay ninh': 'Tay Ninh'
+    'hcm': 'Ho Chi Minh City', 'saigon': 'Ho Chi Minh City', 'tphcm': 'Ho Chi Minh City', 'sgn': 'Ho Chi Minh City',
+    'hanoi': 'Hanoi', 'hn': 'Hanoi', 'danang': 'Da Nang', 'da nang': 'Da Nang',
+    'dn': 'Da Nang', 'haiphong': 'Hai Phong', 'hai phong': 'Hai Phong', 'cantho': 'Can Tho',
+    'can tho': 'Can Tho', 'hue': 'Hue', 'nhatrang': 'Nha Trang', 'nha trang': 'Nha Trang',
+    'dalat': 'Da Lat', 'da lat': 'Da Lat', 'phanthiet': 'Phan Thiet', 'phan thiet': 'Phan Thiet',
+    'vungtau': 'Vung Tau', 'vung tau': 'Vung Tau', 'sapa': 'Sa Pa', 'sa pa': 'Sa Pa',
+    'phuquoc': 'Phu Quoc', 'phu quoc': 'Phu Quoc', 'halong': 'Ha Long', 'ha long': 'Ha Long',
+    'bienhoa': 'Bien Hoa', 'bien hoa': 'Bien Hoa', 'govap': 'Go Vap', 'go vap': 'Go Vap',
+    'cuchi': 'Cu Chi', 'cu chi': 'Cu Chi', 'quan1': 'District 1', 'quan 1': 'District 1',
+    'district1': 'District 1', 'quan2': 'District 2', 'quan 2': 'District 2', 'district2': 'District 2',
+    'quan3': 'District 3', 'quan 3': 'District 3', 'district3': 'District 3', 'quan7': 'District 7',
+    'quan 7': 'District 7', 'district7': 'District 7', 'tanbinh': 'Tan Binh', 'tan binh': 'Tan Binh',
+    'binhthanh': 'Binh Thanh', 'binh thanh': 'Binh Thanh', 'thuduc': 'Thu Duc', 'thu duc': 'Thu Duc',
+    'angiang': 'An Giang', 'an giang': 'An Giang', 'bacgiang': 'Bac Giang', 'bac giang': 'Bac Giang',
+    'backan': 'Bac Kan', 'bac kan': 'Bac Kan', 'baclieu': 'Bac Lieu', 'bac lieu': 'Bac Lieu',
+    'bacninh': 'Bac Ninh', 'bac ninh': 'Bac Ninh', 'bentre': 'Ben Tre', 'ben tre': 'Ben Tre',
+    'binhdinh': 'Binh Dinh', 'binh dinh': 'Binh Dinh', 'binhduong': 'Binh Duong', 'binh duong': 'Binh Duong',
+    'camau': 'Ca Mau', 'ca mau': 'Ca Mau', 'caobang': 'Cao Bang', 'cao bang': 'Cao Bang',
+    'dongnai': 'Dong Nai', 'dong nai': 'Dong Nai', 'dongthap': 'Dong Thap', 'dong thap': 'Dong Thap',
+    'gialai': 'Gia Lai', 'gia lai': 'Gia Lai', 'hagiang': 'Ha Giang', 'ha giang': 'Ha Giang',
+    'hatinh': 'Ha Tinh', 'ha tinh': 'Ha Tinh', 'khanhhoa': 'Khanh Hoa', 'khanh hoa': 'Khanh Hoa',
+    'kiengiang': 'Kien Giang', 'kien giang': 'Kien Giang', 'nghean': 'Nghe An', 'nghe an': 'Nghe An',
+    'ninhbinh': 'Ninh Binh', 'ninh binh': 'Ninh Binh', 'quangnam': 'Quang Nam', 'quang nam': 'Quang Nam',
+    'quangninh': 'Quang Ninh', 'quang ninh': 'Quang Ninh', 'thanhhoa': 'Thanh Hoa', 'thanh hoa': 'Thanh Hoa',
+    'tayninh': 'Tay Ninh', 'tay ninh': 'Tay Ninh'
 };
-
-function createFunPrompt(userMessage) {
-    const currentPrompt = moodPrompts[booPersonality.currentMood] || moodPrompts['hẹ hẹ'];
-    return `${currentPrompt}. Hãy trả lời tin nhắn này theo phong cách trên: "${userMessage}"`;
-}
 
 async function sendMessage(content) {
     try {
@@ -357,24 +207,6 @@ async function sendMessage(content) {
     }
 }
 
-function parseDuration(time) {
-    const regex = /(\d+)([smhd])/;
-    const match = time.match(regex);
-    
-    if (!match) return 5 * 60 * 1000;
-    
-    const num = parseInt(match[1]);
-    const unit = match[2];
-    
-    switch(unit) {
-        case 's': return num * 1000;
-        case 'm': return num * 60 * 1000;
-        case 'h': return num * 60 * 60 * 1000;
-        case 'd': return num * 24 * 60 * 60 * 1000;
-        default: return 5 * 60 * 1000;
-    }
-}
-
 client.once('clientReady', () => {
     console.log(`🎉 ${client.user.tag} đã online! Sẵn sàng làm trò!`);
     client.user.setActivity('TFT dới Boo ❤️', {
@@ -382,31 +214,30 @@ client.once('clientReady', () => {
         url: 'https://discordapp.com/channels/1236687268262051912/1236687268262051915'
     });
     
+    // Đổi mood tự động sau 2 giờ
     schedule.scheduleJob('0 */2 * * *', () => {
         booPersonality.changeMood();
         console.log(`Boo mood: ${booPersonality.currentMood}`);
     });
     
+    // Lịch chào buổi sáng
     schedule.scheduleJob('0 6 * * *', () => {
-        sendMessage(`🌅 Chào buổi sáng các con ghẹ! Tao thức dậy rồi nè, chơi game dội tao đi xàmloz! Hôm nay chúng ta sẽ sụckec vui vẻ lắm đấy! \\(^o^)/✨`);
+        sendMessage(`🌅 Chào buổi sáng các con ghệ! Tao thức dậy rồi nè, chơi game dội tao đi xàmloz! Hôm nay chúng ta sẽ sụckec vui vẻ lắm đấy! \\(^o^)/✨`);
     });
 
+    // Lịch chào buổi trưa
     schedule.scheduleJob('0 11 * * *', () => {
         sendMessage(`🍚 Trưa rồi dumme! Mọi người ăn cơm chưa nè? Tao đói bụng rồi vãi kejc! Nhớ ăn uống đầy đủ nhé không tao mắng đó! (￣ヘ￣)🥗`);
     });
 
+    // Lịch chào buổi tối
     schedule.scheduleJob('0 21 * * *', () => {
         sendMessage(`🌙 Tối rồi nè các haizz mệc lắm rùi! Ai chuẩn bị đi ngủ chưa? Tao buồn ngủ quá! Chúc mọi người ngủ ngon và có giấc mơ thấy concac nha! (´∀｀)💤`);
     });
+
+    // Lịch chào buổi khuya
     schedule.scheduleJob('11 1 * * *', () => {
         sendMessage(`🌙 Khua rồi ngu đi các con ghệ của ta ơi, Boo NGỦ như chó chết dậy đi đái💤`);
-    });
-    schedule.scheduleJob('0 * * * *', () => {
-        const hour = new Date().getHours();
-        if (hour !== 6 && hour !== 11 && hour !== 21) {
-            const randomMsg = funRandomQuestions[Math.floor(Math.random() * funRandomQuestions.length)];
-            sendMessage(`💬 ${randomMsg}`);
-        }
     });
 });
 
@@ -424,21 +255,13 @@ client.on('messageCreate', async (message) => {
             .setTitle('📖 Lệnh Của Boo! (hẹ hẹ)')
             .setDescription('Mày cần tao giúp gì hả dumme? Đây là mấy lệnh mày có thể dùng nè:')
             .addFields(
-                { name: '😂 Lệnh Vui', value: '`!gacha`\n`!trollpic`\n`!boi`\n`!mood <mood_mới>`', inline: true },
-                { name: '🛠️ Lệnh Dành cho Admin', value: '`!mute <user> <thời gian>`\n`!role <user> <tên_role>`', inline: true },
+                { name: '😂 Lệnh Vui', value: '`!trollpic`\n`!boi`\n`!mood <mood_mới>`', inline: true },
                 { name: '🔎 Lệnh Khác', value: '`!weather <thành_phố>`\n`@Boo` hoặc `boo ...`', inline: true },
                 { name: '\u200b', value: '\u200b' },
             )
             .setFooter({ text: 'Boo toxic, nhưng Boo cũng giúp đỡ nha! (hẹ hẹ)' })
             .setTimestamp();
         await message.channel.send({ embeds: [helpEmbed] });
-        return;
-    }
-    
-    // Command /gacha
-    if (command === 'gacha') {
-        const randomResult = booPersonality.gachaResults[Math.floor(Math.random() * booPersonality.gachaResults.length)];
-        await message.reply(randomResult);
         return;
     }
 
@@ -460,27 +283,94 @@ client.on('messageCreate', async (message) => {
         return;
     }
     
-    // FIXED: Command /trollpic với ảnh hoạt động
+    // Command /trollpic
     if (command === 'trollpic') {
+        const memes = [
+            'https://i.imgur.com/7drHiqr.gif',
+            'https://i.imgur.com/kqOcUZ5.jpg',
+            'https://i.imgur.com/wqMWK7z.png',
+            'https://i.imgur.com/J5LVHEL.jpg',
+            'https://i.imgur.com/wPk7w0L.gif',
+            'https://i.imgur.com/YdCX2Kv.jpg',
+            'https://i.imgur.com/eKNhkzI.jpg',
+            'https://i.imgur.com/R390EId.jpg',
+            'https://i.imgur.com/MBUyt0n.png',
+            'https://i.imgur.com/3hQH3Fv.gif',
+            'https://i.imgur.com/0rKQ2iM.gif',
+            'https://i.imgur.com/P9WqhB1.gif',
+            'https://i.imgur.com/LVx2QXz.gif',
+            'https://i.imgur.com/DHcBB1d.gif',
+            'https://i.imgur.com/HF1xQWR.gif',
+            'https://i.imgur.com/gEjjWZC.gif',
+            'https://i.imgur.com/FJwP5pM.gif',
+            'https://i.imgur.com/Yd3hN4r.gif',
+            'https://i.imgur.com/U6dGosw.gif',
+            'https://i.imgur.com/Tc3Kp8T.gif'
+        ];
+
         const randomMeme = memes[Math.floor(Math.random() * memes.length)];
+        const titles = [
+            '🎭 Troll by Boo!',
+            '🤡 Ảnh troll siêu cấp!',
+            '🔥 Cà khịa incoming!',
+            '😏 Đây rồi, dumme!',
+            '💀 Toxic Delivery!'
+        ];
+
+        const descriptions = [
+            'Đây nè mày xem đi dumme! Cười đi ngu ơi! 😂',
+            'Ảnh troll này đúng bản mặt mày luôn 🤣',
+            'Hẹ hẹ, coi xong đừng khóc nha dumme 😈',
+            'Vãi kejc, vừa toxic vừa nghệ thuật 🤡',
+            'Ngồi im coi troll pic, đừng có chối 😎'
+        ];
+
+        const footers = [
+            { text: 'Bootoxic! (hẹ hẹ)' },
+            { text: 'Troll là chân ái! 🤡' },
+            { text: 'Cà khịa là đam mê 🔥' },
+            { text: 'Ngu thì chịu, tao toxic Okee 😏' },
+            { text: 'Hội những kẻ bị troll 💀' }
+        ];
+
+        const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+        const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
+        const randomFooter = footers[Math.floor(Math.random() * footers.length)];
+
         const trollEmbed = new EmbedBuilder()
             .setColor('#FF6B35')
-            .setTitle('🎭 Troll Pic Service by Boo!')
-            .setDescription('Đây là ảnh troll cho mày xem dumme! Cười đi ngu ơi! 😂')
+            .setTitle(randomTitle)
+            .setDescription(randomDesc)
             .setImage(randomMeme)
-            .setFooter({ text: 'Boo troll pic service - Guaranteed toxic! (hẹ hẹ)' })
+            .setFooter(randomFooter)
             .setTimestamp();
+
         
         await message.channel.send({ embeds: [trollEmbed] });
         
-        // Random toxic comment
         const trollComments = [
-            'Haha cười chưa dumme? Tao có nhiều ảnh hay hơn nữa đấy! 😂',
-            'Vãi kejc ảnh này toxic không? Tao sưu tầm cả đời đấy! (hẹ hẹ)',
-            'Xạocho! Mày thích không? Tao còn kho ảnh khủng lắm! 🔥',
-            'Hehe ảnh này pro không mày? Tao là master troll nè! 💀',
-            'Mệc! Ảnh này làm tao cười suốt ngày luôn dumme! 😄'
+            'Haha cười chưa dumme? Chưa thì tao gửi thêm cho mày khóc luôn! 😂🔥',
+            'Vãi kejc ảnh này đỉnh vãi, nhìn mà ngu luôn á! (hẹ hẹ) 🤡',
+            'Ủa sao mặt mày giống trong ảnh này thế? Xạochoooo 🤣',
+            'Coi xong đừng khóc nha, tại tao thương mày mới share đó 😏',
+            'Bippp! Đỉnh cao nghệ thuật cà khịa là đây, nhận đi con 😎',
+            'Ảnh này mà không làm mày cười thì tao thua, dumme 😆',
+            'Ê, giống mày 90% luôn kìa, chỉ thiếu cái não thôi 🤔',
+            'Cười cái coi? Hay để tao in ảnh này dán trước cửa nhà mày 😅',
+            'Ảnh troll chứ có phải gương soi đâu, nhìn kỹ làm gì dumme 🐒',
+            'Huhu cười đi con, không là tao post ảnh mày lên group lớp đó 🤣',
+            'Nhìn ảnh này mà thấy tương lai mày hiện ra luôn =)) 📉',
+            'Ảnh này đỉnh vl, đúng gu toxic của tao 😈',
+            'Ngồi nghiêm túc coi mà xém rớt ghế luôn, vãi ẻ =)) 🤪',
+            'Mày thấy vui hông? Tao thì vui rồi đó, còn mày thì… ngu thêm 🤓',
+            'Ảnh này xứng đáng để làm avatar của mày, chốt luôn 😏',
+            'Lại còn giả bộ ngầu, nhìn mà muốn phang cái ảnh này vô mặt 🤭',
+            'Ảnh troll level max, xem xong auto dốt thêm vài điểm IQ 💀',
+            'Tao sưu tầm cả đống, coi xong chỉ muốn drop out cuộc đời 🤣',
+            'Hé lô, đây là phiên bản nâng cấp của mày trong ảnh đó 🙃',
+            'Coi xong cười chưa? Chưa thì tao gửi thêm combo rickroll 😎🎶'
         ];
+
         
         setTimeout(() => {
             const randomComment = trollComments[Math.floor(Math.random() * trollComments.length)];
@@ -490,7 +380,7 @@ client.on('messageCreate', async (message) => {
         return;
     }
     
-    // Command /boi
+    // Command /boi tự động random
     if (command === 'boi') {
         const randomBoi = booPersonality.boiResults[Math.floor(Math.random() * booPersonality.boiResults.length)];
         await message.reply(randomBoi);
@@ -499,12 +389,9 @@ client.on('messageCreate', async (message) => {
 
     if (message.mentions.users.has(PHUCC_USER_ID) || content.includes('@phucc') || message.mentions.users.some(user => user.username.toLowerCase().includes('phucc'))) {
         const phuccReplies = [
-            `Ơ dumme! ${message.author.username} gọi **ông chủ toxic của tao** à? Phucc bận đi chơi với gái rồi xàmloz! Chat với tao đi! (hẹ hẹ) \\(^o^)/`,
-            `Eyyy! **Big boss Phucc** bận lắm dumme! ${message.author.username} chat với tao đi, tao vui lắm đấy! (◕‿◕) vãi kejc`,
-            `Ui ui! Phucc là **boss độc tài của tao** nè! Anh đang bận làm topic boy rồi, nói chuyện với tao đi mày ơi! (hẹ hẹ) ♪(´▽｀)`,
-            `Hehe! ${message.author.username} tìm **ông chủ trẻ trâu** à? Phucc đi đâu rồi ta dumme? Chat với tao đi, tao buồn lắm! (hẹ hẹ) (´∀｀)`,
-            `Xạocho! **Big daddy Phucc** không có nhà! ${message.author.username} ơi, chơi với tao đi! Tao cô đơn quá vãi kejc! (hẹ hẹ) ╰(▔∀▔)╯`,
-            `Vãi loz ${message.author.username} tìm **chủ tịch Phucc** à? Anh ấy đang toxic với ai đó rồi! Chat với tao đi ngu ơi! (mệc)`
+            `Ơ dumme! ${message.author.username} gọi **ông chủ của tao** à? Phucc bận đi chơi với gái rồi xàmloz! Chat với tao đi! (hẹ hẹ) \\(^o^)/`,
+            `Eyyy! **Ông chủ Phucc của tao bận lắm dumme! ${message.author.username} chat với tao đi, tao vui lắm đấy! (◕‿◕) vãi kejc`,
+            `Ui ui! Phucc là **đại ca của tao** nè! Anh đang bận làm good boy rồi, nói chuyện với tao đi mày ơi! (hẹ hẹ) ♪(´▽｀)`
         ];
         
         const reply = phuccReplies[Math.floor(Math.random() * phuccReplies.length)];
@@ -536,102 +423,42 @@ client.on('messageCreate', async (message) => {
             const text = response.text();
 
             if (isComfortNeeded) {
-                const comfortMsg = booPersonality.getComfortMessage();
-                const activity = booPersonality.getFunActivity();
+                const comfortMsg = booPersonality.comfortMessages[Math.floor(Math.random() * booPersonality.comfortMessages.length)];
+                const activity = booPersonality.funActivities[Math.floor(Math.random() * booPersonality.funActivities.length)];
                 await message.reply(`${comfortMsg}\n\n${activity}\n\nTao luôn ở đây với mày nha dumme! Đừng buồn nữa! (◕‿◕)💕`);
                 return;
             }
 
-            await message.reply(`${text} ${booPersonality.currentMood}`);
+            await message.reply(text);
         } catch (error) {
             console.error('Lỗi khi gọi Gemini AI:', error);
-            const backupReply = booPersonality.getFunReply();
-            await message.reply(`${backupReply} Tao bị lag tí dumme, thông cảm nha xàmloz! (⌒_⌒;)`);
+            const backupReply = booPersonality.randomFunReplies[Math.floor(Math.random() * booPersonality.randomFunReplies.length)];
+            await message.reply(`${backupReply} Tao bị lag tí dumme, thông cảm nha hẹ hẹ! (⌒_⌒;)`);
         }
     } else if (message.mentions.has(client.user) || content.includes('boo')) {
         const reply = booPersonality.getRandomReply();
         await message.reply(reply);
     }
     
-    // Command `mute` with funny/toxic style
-    if (command === 'mute') {
-        if (!message.member.permissions.has(PermissionFlagsBits.ModerateMembers)) {
-            return message.reply('Mày không có quyền mute người khác nha! Boo không giúp được đâu dumme! (◞‸◟)');
-        }
-
-        const member = message.mentions.members.first();
-        if (!member) {
-            return message.reply('Vui lòng tag người muốn mute! Tao không biết mute ai! (´∀｀)');
-        }
-
-        const time = args[1] || '5m';
-        const duration = parseDuration(time);
-
-        try {
-            await member.timeout(duration, `Muted by ${message.author.tag}`);
-            
-            const muteEmbed = new EmbedBuilder()
-                .setColor('#FF6B6B')
-                .setTitle('🔇 Boo Mute Service!')
-                .setDescription(`**${member.user.username}** đã bị cấm lặng! Mày bị ngu đó! uwu`)
-                .addFields(
-                    { name: '⏰ Thời gian', value: time, inline: true },
-                    { name: '👮‍♂️ Mute bởi', value: message.author.username, inline: true },
-                    { name: '💭 Lý do', value: 'Vi phạm quy tắc server! Hehe', inline: true }
-                )
-                .setFooter({ text: `${member.user.username} sẽ được unmute sau ${time} nha! (◕‿◕)` })
-                .setTimestamp();
-
-            await message.channel.send({ embeds: [muteEmbed] });
-            
-            setTimeout(() => {
-                message.channel.send(`Psst... ${member.user.username} đã bị Boo mute rồi nè! Mọi người nhớ chấp hành luật pháp nhé! (hẹ hẹ) \\(^o^)/`);
-            }, 2000);
-
-        } catch (error) {
-            await message.reply('⌐ Boo không thể mute người này! Có lẽ họ quá mạnh rồi! (⌒_⌒;)');
-        }
-    }
-    
-    // FIXED: Command `weather` với mapping thành phố Việt Nam
+    // Cải tiến command `weather` với Embed đẹp mắt
     if (command === 'weather') {
         const cityInput = args.join(' ').toLowerCase().trim();
         if (!cityInput) {
-            return message.reply('Mày muốn xem thời tiết ở đâu dumme? Dùng `!weather <tên_thành_phố>` đi ngu ơi!\n\n**Ví dụ:** `!weather hcm`, `!weather hanoi`, `!weather govap`, `!weather cuchi` xàmloz! (◕‿◕)');
+            return message.reply('Mày muốn xem thời tiết ở đâu dumme? Dùng `!weather <tên_thành_phố>` đi ngu ơi! Ví dụ: `!weather hcm` hoặc `!weather cuchi`.');
         }
 
-        // Tìm tên thành phố trong mapping
         const cityName = cityMapping[cityInput] || cityInput;
         
-        console.log(`Searching weather for: "${cityInput}" -> "${cityName}"`);
-
         try {
             await message.channel.sendTyping();
             
-            // FIXED: URL với encoding và country code
             const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)},VN&units=metric&lang=vi&appid=${OPENWEATHER_API_KEY}`;
-            console.log(`Weather API URL: ${url}`);
-            
             const response = await fetch(url);
             const data = await response.json();
 
-            console.log('Weather API Response:', data);
-
             if (data.cod !== 200) {
-                // Thử tìm kiếm không có country code
-                const urlBackup = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&units=metric&lang=vi&appid=${OPENWEATHER_API_KEY}`;
-                console.log(`Backup Weather API URL: ${urlBackup}`);
-                
-                const backupResponse = await fetch(urlBackup);
-                const backupData = await backupResponse.json();
-                
-                if (backupData.cod !== 200) {
-                    const availableCities = Object.keys(cityMapping).slice(0, 10).join(', ');
-                    return message.reply(`❌ Không tìm thấy thời tiết cho "${cityInput}" vãi kejc! Tao buồn quá dumme! 😔\n\n**Thử các thành phố này:** ${availableCities}\n\n**Hoặc:** hcm, hanoi, danang, govap, cuchi, quan1... (◞‸◟)`);
-                }
-                
-                // Dùng backup data
-                Object.assign(data, backupData);
+                const availableCities = Object.keys(cityMapping).slice(0, 10).join(', ');
+                return message.reply(`❌ Không tìm thấy thời tiết cho "${cityInput}" vãi kejc! Tao buồn quá dumme! 😔\n\n**Thử các thành phố này:** ${availableCities}.`);
             }
 
             const weatherDesc = data.weather[0].description;
@@ -641,7 +468,6 @@ client.on('messageCreate', async (message) => {
             const windSpeed = data.wind?.speed || 0;
             const visibility = data.visibility ? Math.round(data.visibility / 1000) : 'N/A';
 
-            // Weather icon mapping
             const weatherIcon = data.weather[0].main.toLowerCase().includes('rain') ? '🌧️' :
                                data.weather[0].main.toLowerCase().includes('cloud') ? '☁️' :
                                data.weather[0].main.toLowerCase().includes('sun') || data.weather[0].main.toLowerCase().includes('clear') ? '☀️' :
@@ -651,90 +477,37 @@ client.on('messageCreate', async (message) => {
 
             const weatherEmbed = new EmbedBuilder()
                 .setColor('#87CEEB')
-                .setTitle(`${weatherIcon} Thời tiết ${data.name} nè dumme!`)
-                .setDescription(`**${weatherDesc}** - Tao báo cáo đây xàmloz! \\(^o^)/`)
+                .setTitle(`${weatherIcon} Thời tiết tại ${data.name}`)
+                .setDescription(`**${weatherDesc.charAt(0).toUpperCase() + weatherDesc.slice(1)}** - Tao báo cáo đây xàmloz!`)
                 .addFields(
                     { name: '🌡️ Nhiệt độ', value: `${temp}°C`, inline: true },
                     { name: '🤔 Cảm giác như', value: `${feelsLike}°C`, inline: true },
                     { name: '💧 Độ ẩm', value: `${humidity}%`, inline: true },
                     { name: '💨 Gió', value: `${windSpeed} m/s`, inline: true },
                     { name: '👁️ Tầm nhìn', value: `${visibility} km`, inline: true },
-                    { name: '🗺️ Tọa độ', value: `${data.coord.lat}, ${data.coord.lon}`, inline: true }
                 )
-                .setFooter({ text: 'Boo toxic weather service! Chuẩn xác 100% vãi kejc! (hẹ hẹ)' })
+                .setFooter({ text: 'Boo weather service! Chuẩn xác 100%!' })
                 .setTimestamp();
 
             await message.channel.send({ embeds: [weatherEmbed] });
-            
+
             setTimeout(() => {
                 let comment = '';
-                if (temp > 35) comment = 'Vãi loz nóng như địa ngục! Bật điều hòa đi dumme kẻo chết khát! 🔥🥵';
-                else if (temp > 30) comment = 'Nóng quá nè! Uống nước nhiều đi dumme! 🔥💦';
-                else if (temp < 15) comment = 'Brrr lạnh vãi nháy! Mặc áo ấm đi ngu ơi! ❄️🧥';
-                else if (temp < 20) comment = 'Hơi lạnh đấy! Cẩn thận cảm lạnh nha dumme! 🌬️';
-                else comment = 'Thời tiết ổn đấy! Ra ngoài chơi đi các dumme! ☀️😎';
+                if (temp > 35) comment = 'Nóng như địa ngục! Mặc đồ mát mẻ vào các con ghệ! 🔥🥵';
+                else if (temp > 30) comment = 'Nóng vãi! Uống nước nhiều vào nha Ku! 💦';
+                else if (temp < 15) comment = 'Lạnh run! Mặc áo ấm đi nha mấy đứa! ❄️🧥';
+                else if (temp < 20) comment = 'Hơi lạnh đấy! Cẩn thận cảm lạnh nha Ku! 🌬️';
+                else comment = 'Thời tiết ổn đấy! Ra ngoài chơi đi các con ghệ! ☀️😎';
                 
-                if (humidity > 80) comment += '\nĐộ ẩm cao vãi! Cẩn thận ẩm mốc nha xàmloz! 💧';
-                if (windSpeed > 10) comment += '\nGió to thật! Cẩn thận bay mũ đấy dumme! 💨🧢';
+                if (humidity > 80) comment += '\nĐộ ẩm cao vãi! Cẩn thận ẩm mốc nha Ku! 💧';
+                if (windSpeed > 10) comment += '\nGió to thật! Cẩn thận bay mũ đấy nha! 💨🧢';
                 
-                message.channel.send(`${comment} (◕‿◕)`);
+                message.channel.send(`${comment} `);
             }, 2000);
 
         } catch (error) {
             console.error('Weather API Error:', error);
-            await message.reply(`❌ Tao không lấy được thời tiết vãi kejc! \n\n**Lỗi:** ${error.message}\n\n**API lag rồi dumme!** Thử lại sau vài phút nha! (⌒_⌒;)☔\n\n**Tip:** Thử \`!weather hcm\` hoặc \`!weather hanoi\`!`);
-        }
-    }
-
-    // Command `role` with funny/toxic style
-    if (command === 'role') {
-        if (!message.member.permissions.has(PermissionFlagsBits.ManageRoles)) {
-            return message.reply('Bạn không có quyền cấp role nha! Boo không thể giúp! (◞‸◟)');
-        }
-
-        const memberName = args.shift();
-        const roleName = args.join(' ');
-
-        const member = message.guild.members.cache.find(m => 
-            m.user.username.toLowerCase() === memberName.toLowerCase() ||
-            m.nickname?.toLowerCase() === memberName.toLowerCase()
-        );
-
-        if (!member) {
-            return message.reply('Không tìm thấy người này! Boo tìm mãi không thấy! (´∀｀)');
-        }
-
-        const role = message.guild.roles.cache.find(r => 
-            r.name.toLowerCase() === roleName.toLowerCase()
-        );
-
-        if (!role) {
-            return message.reply('Không có role này! Boo không biết role gì đó! (◞‸◟)');
-        }
-
-        try {
-            await member.roles.add(role);
-            
-            const roleEmbed = new EmbedBuilder()
-                .setColor('#00FF00')
-                .setTitle('🎉 Chúc mừng! Có role mới!')
-                .setDescription(`**${member.user.username}** vừa được cấp role **${role.name}**!`)
-                .addFields(
-                    { name: '👤 Người nhận', value: member.user.username, inline: true },
-                    { name: '🏷️ Role mới', value: role.name, inline: true },
-                    { name: '👮‍♂️ Cấp bởi', value: message.author.username, inline: true }
-                )
-                .setFooter({ text: 'Boo role service! Chúc mừng nha! \\(^o^)/' })
-                .setTimestamp();
-
-            await message.channel.send({ embeds: [roleEmbed] });
-            
-            setTimeout(() => {
-                message.channel.send(`Yayyy! ${member.user.username} có role ${role.name} rồi! Thật tuyệt vời! Boo vui lắm! 🎊✨ (◕‿◕)`);
-            }, 2000);
-
-        } catch (error) {
-            await message.reply('❌ Không thể cấp role này! Có lẽ role quá cao cấp rồi! (⌒_⌒;)');
+            await message.reply(`❌ Tao không lấy được thời tiết! \n\n**API lag rồi dumme!** Thử lại sau vài phút nha! (⌒_⌒;)`);
         }
     }
 });
@@ -746,9 +519,8 @@ client.on('messageReactionAdd', async (reaction, user) => {
     if (reaction.emoji.name === '😂') {
         const replyMessages = [
             'Cười cái gì? Mày thấy câu này ngu hả dumme? 😂',
-            'Cười như thằng dở hơi vậy! Mệt quá!',
-            'Ôi, cười vui thế! Kể tao nghe đi, xạocho!',
-            'Haha, có gì vui thế dumme? Kể tao nghe với! (hẹ hẹ)'
+            'Cười như thằng dở hơi vậy! Mệt quá! 😒',
+            'Ôi, cười vui thế! Kể tao nghe đi, xạocho! 😏',
         ];
         const randomReply = replyMessages[Math.floor(Math.random() * replyMessages.length)];
         await reaction.message.channel.send(randomReply);
